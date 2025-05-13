@@ -3,7 +3,7 @@
 #include <string.h>
 #include <time.h>
 
-#define MAX_ALUNOS 200000
+#define MAX_ALUNOS 50
 
 typedef struct {
     int ano;
