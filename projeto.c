@@ -7,17 +7,16 @@
 
 typedef struct {
     int ano;
-    char nome[12];
-    char disciplina[20];
+    char nome[10];
+    char disciplina[15];
     float nota;
 } Aluno;
 
 const char* disciplinas[] = {"Matemática", "Português", "Geografia"};
 const int num_disciplinas = 3;
-const char* nomes_base[] = {"João", "Maria", "Carlos", "Julia", "Pedro", "Gabriela"};
+const char* nomes_base[] = {"João", "Maria", "Carlos", "Julia", "Pedro", "Anna"};
 const int num_nomes_base = 6;
 
-// Geração de entrada aleatória
 void gerarEntradaTXT(int quantidade) {
     FILE *arquivo = fopen("entrada.txt", "w");
     if (arquivo == NULL) {
@@ -26,8 +25,9 @@ void gerarEntradaTXT(int quantidade) {
     }
 
     for (int i = 0; i < quantidade; i++) {
-        int ano = 2010 + rand() % (2023 - 2010 + 1);
-        char nome[50];
+        int ano = 2020 + rand() % (2025 - 2020 + 1);
+
+        char nome[12];
         const char* base = nomes_base[rand() % num_nomes_base];
         int sufixo = rand() % 1000;
         sprintf(nome, "%s%d", base, sufixo);
@@ -42,7 +42,6 @@ void gerarEntradaTXT(int quantidade) {
     printf("Arquivo entrada.txt gerado com sucesso com %d linhas.\n", quantidade);
 }
 
-// Leitura do arquivo de entrada
 int lerTXT(const char *nomeArquivo, Aluno alunos[]) {
     FILE *file = fopen(nomeArquivo, "r");
     if (!file) {
@@ -66,7 +65,6 @@ int lerTXT(const char *nomeArquivo, Aluno alunos[]) {
     return totalAlunos;
 }
 
-// Ordenação por Bubble Sort
 void bubbleSortPorNota(Aluno array[], int total, int* comparacoes, double* tempo_execucao) {
     clock_t start_time = clock();
 
@@ -86,18 +84,11 @@ void bubbleSortPorNota(Aluno array[], int total, int* comparacoes, double* tempo
     *tempo_execucao = (double)(end_time - start_time) / CLOCKS_PER_SEC;
 }
 
-// Merge com alocação dinâmica (heap)
 void merge(Aluno array[], int left, int mid, int right, int* comparacoes) {
     int n1 = mid - left + 1;
     int n2 = right - mid;
 
-    Aluno *leftArray = malloc(n1 * sizeof(Aluno));
-    Aluno *rightArray = malloc(n2 * sizeof(Aluno));
-
-    if (!leftArray || !rightArray) {
-        printf("Erro de alocação de memória no merge.\n");
-        exit(1);
-    }
+    Aluno leftArray[n1], rightArray[n2];
 
     for (int i = 0; i < n1; i++)
         leftArray[i] = array[left + i];
@@ -108,43 +99,44 @@ void merge(Aluno array[], int left, int mid, int right, int* comparacoes) {
     while (i < n1 && j < n2) {
         (*comparacoes)++;
         if (leftArray[i].nota >= rightArray[j].nota) {
-            array[k++] = leftArray[i++];
+            array[k] = leftArray[i];
+            i++;
         } else {
-            array[k++] = rightArray[j++];
+            array[k] = rightArray[j];
+            j++;
         }
+        k++;
     }
 
     while (i < n1) {
-        array[k++] = leftArray[i++];
-    }
-    while (j < n2) {
-        array[k++] = rightArray[j++];
+        array[k] = leftArray[i];
+        i++;
+        k++;
     }
 
-    free(leftArray);
-    free(rightArray);
+    while (j < n2) {
+        array[k] = rightArray[j];
+        j++;
+        k++;
+    }
 }
 
-// Merge Sort principal
-void mergeSortPorNota(Aluno array[], int left, int right, int* comparacoes) {
+void mergeSortPorNota(Aluno array[], int left, int right, int* comparacoes, double* tempo_execucao) {
+    clock_t start_time = clock();
+
     if (left < right) {
         int mid = left + (right - left) / 2;
-        mergeSortPorNota(array, left, mid, comparacoes);
-        mergeSortPorNota(array, mid + 1, right, comparacoes);
+
+        mergeSortPorNota(array, left, mid, comparacoes, tempo_execucao);
+        mergeSortPorNota(array, mid + 1, right, comparacoes, tempo_execucao);
+
         merge(array, left, mid, right, comparacoes);
     }
+
+    clock_t end_time = clock();
+    *tempo_execucao = (double)(end_time - start_time) / CLOCKS_PER_SEC;
 }
 
-// Função auxiliar com tempo para Merge Sort
-void ordenarMergeSort(Aluno array[], int total, int* comparacoes, double* tempo_execucao) {
-    clock_t start = clock();
-    *comparacoes = 0;
-    mergeSortPorNota(array, 0, total - 1, comparacoes);
-    clock_t end = clock();
-    *tempo_execucao = (double)(end - start) / CLOCKS_PER_SEC;
-}
-
-// Salvar o resultado ordenado
 void salvarOrdenado(const char *nomeArquivo, Aluno alunos[], int total) {
     FILE *file = fopen(nomeArquivo, "w");
     if (!file) {
@@ -164,21 +156,21 @@ void salvarOrdenado(const char *nomeArquivo, Aluno alunos[], int total) {
     printf("Arquivo %s gerado com sucesso com os dados ordenados por nota.\n", nomeArquivo);
 }
 
-// Programa principal
 int main() {
-    srand(time(NULL));
+    srand(time(NULL)); // semente para números aleatórios
+
+    int opcao;
+    printf("\n==== MENU ====\n");
+    printf("1 - Gerar arquivo entrada.txt\n");
+    printf("2 - Ordenar entrada.txt por nota (Bubble Sort)\n");
+    printf("3 - Ordenar entrada.txt por nota (Merge Sort)\n");
+    printf("Escolha uma opção: ");
+    scanf("%d", &opcao);
+
     Aluno alunos[MAX_ALUNOS];
     int totalAlunos;
     int comparacoes = 0;
     double tempo_execucao = 0.0;
-    int opcao;
-
-    printf("\n==== MENU ====\n");
-    printf("1 - Gerar arquivo entrada.txt\n");
-    printf("2 - Ordenar por nota (Bubble Sort)\n");
-    printf("3 - Ordenar por nota (Merge Sort)\n");
-    printf("Escolha uma opção: ");
-    scanf("%d", &opcao);
 
     switch (opcao) {
         case 1: {
@@ -190,7 +182,6 @@ int main() {
         }
         case 2:
             totalAlunos = lerTXT("entrada.txt", alunos);
-            printf("Total de alunos lidos: %d\n", totalAlunos);
             if (totalAlunos > 0) {
                 bubbleSortPorNota(alunos, totalAlunos, &comparacoes, &tempo_execucao);
                 salvarOrdenado("saida_bubble_sort.txt", alunos, totalAlunos);
@@ -199,9 +190,8 @@ int main() {
             break;
         case 3:
             totalAlunos = lerTXT("entrada.txt", alunos);
-            printf("Total de alunos lidos: %d\n", totalAlunos);
             if (totalAlunos > 0) {
-                ordenarMergeSort(alunos, totalAlunos, &comparacoes, &tempo_execucao);
+                mergeSortPorNota(alunos, 0, totalAlunos - 1, &comparacoes, &tempo_execucao);
                 salvarOrdenado("saida_merge_sort.txt", alunos, totalAlunos);
                 printf("\nAlgoritmo: Merge Sort\nTamanho Entrada: %d\nTempo execução: %.2f segundos\nComparações (passos): %d\n", totalAlunos, tempo_execucao, comparacoes);
             }
