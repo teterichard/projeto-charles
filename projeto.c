@@ -7,8 +7,8 @@
 
 typedef struct {
     int ano;
-    char nome[100];
-    char disciplina[50];
+    char nome[12];
+    char disciplina[20];
     float nota;
 } Aluno;
 
